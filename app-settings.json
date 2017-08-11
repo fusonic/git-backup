@@ -1,0 +1,43 @@
+{
+  "Git": [
+    // Uncomment services to backup:
+    //{
+    //  "Type": "Bitbucket",
+    //  "Username": "",
+    //  "PersonalAccessToken": ""
+    //},
+    //{
+    //  "Type": "Github",
+    //  "Username": "",
+    //  "PersonalAccessToken": ""
+    //},
+    //{
+    //  "Type": "Gitlab",
+    //  "PersonalAccessToken": ""
+    //}
+  ],
+  "Backup": {
+    "MaxDegreeOfParallelism": 8,
+    "Local": {
+      "DeleteAfterDays": 1,
+      "Destination": "/app/GitBackup",
+      "BackupStrategy": "Incremental"
+    }
+  },
+  "Mail": {
+    "Host": "",
+    "Port": 25,
+    "Username": "",
+    "Password": "",
+    "UseSsl": "false",
+    "Sender": {
+      "Address": "",
+      "Name": ""
+    },
+    "Receiver": {
+      "Address": "",
+      "Name": ""
+    }
+  },
+  "DeadmanssnitchUrl": ""
+}

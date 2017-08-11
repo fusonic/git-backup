@@ -1,0 +1,27 @@
+stages:
+  - build
+  - build_image
+
+build:
+  image: microsoft/dotnet:latest
+  stage: build
+  before_script:
+    - dotnet restore
+  script:
+    - dotnet publish -c Release -o out
+  artifacts:
+    paths:
+      - out
+    expire_in: 1 hour
+
+build_image:
+  image: docker:git
+  stage: build_image
+  services:
+    - docker:dind
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - master

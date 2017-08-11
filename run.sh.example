@@ -1,0 +1,6 @@
+#!/bin/sh -e
+sudo docker run \
+-v /YOUR/BACKUP/DESTINATION/PATH:/app/GitBackup \
+-e SSH_PRIVATE_KEY="$(cat /PATH/TO/YOUR/.ssh/id_rsa)" \
+-e KNOWN_HOSTS="$(cat /PATH/TO/YOUR/.ssh/known_hosts)" \
+fusonic-git-backup:latest
