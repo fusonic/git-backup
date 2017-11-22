@@ -15,12 +15,12 @@ namespace Fusonic.GitBackup.Services.Heartbeat
             this.logger = logger;
         }
 
-        public Task Notify()
+        public async Task Notify()
         {
             logger.LogInformation($"Sending Heartbeat to {url} ...");
             using (var client = new HttpClient())
             {
-                return client.GetStringAsync(url);
+                await client.GetStringAsync(url);
             }
         }
     }
