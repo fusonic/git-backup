@@ -33,7 +33,9 @@ namespace Fusonic.GitBackup.Services.Git
                 while (!string.IsNullOrEmpty(nextPage))
                 {
                     var response = await api.GetRepositoriesAsync(nextPage);
-                    repositories.AddRange(response.GetContent().Select(x => new Repository()
+                    repositories.AddRange(response.GetContent()
+                    .Where(x => x.DefaultBranch != null)
+                    .Select(x => new Repository()
                     {
                         HttpsUrl = x.HttpsUrl.Replace("//", "//gitlab-ci-token:" + gitSetting.PersonalAccessToken + "@"),
                         Provider = GitProvider.Gitlab,

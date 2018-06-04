@@ -9,5 +9,8 @@ namespace Fusonic.GitBackup.Models
 
         [JsonProperty("path_with_namespace")]
         public string Name { get; set; }
+
+        [JsonProperty("default_branch")]
+        public string DefaultBranch { get; set; }
     }
 }
