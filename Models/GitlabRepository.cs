@@ -12,5 +12,8 @@ namespace Fusonic.GitBackup.Models
 
         [JsonProperty("default_branch")]
         public string DefaultBranch { get; set; }
+
+        public override string ToString()
+             => $"{Name}";
     }
 }

@@ -48,7 +48,7 @@ namespace Fusonic.GitBackup
             configuration.Bind(settings);
             container.RegisterSingleton(settings);
 
-            container.Register<Func<IGitlabApi>>(() => () => RestClient.For<IGitlabApi>("https://gitlab.com/api/v3"));
+            container.Register<Func<IGitlabApi>>(() => () => RestClient.For<IGitlabApi>("https://gitlab.com/api/v4"));
             container.Register<Func<IGithubApi>>(() => () => RestClient.For<IGithubApi>("https://api.github.com"));
             container.Register<Func<IBitbucketApi>>(() => () => RestClient.For<IBitbucketApi>("https://api.bitbucket.org/2.0"));
             

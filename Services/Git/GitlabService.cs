@@ -28,20 +28,21 @@ namespace Fusonic.GitBackup.Services.Git
             {
                 var api = apiFactory();
                 api.PrivateToken = gitSetting.PersonalAccessToken;
-                
-                var nextPage = "?per_page=1000";
+
+                var nextPage = "?per_page=1000&membership=true";
                 while (!string.IsNullOrEmpty(nextPage))
                 {
                     var response = await api.GetRepositoriesAsync(nextPage);
-                    repositories.AddRange(response.GetContent()
-                    .Where(x => x.DefaultBranch != null)
-                    .Select(x => new Repository()
-                    {
-                        HttpsUrl = x.HttpsUrl.Replace("//", "//gitlab-ci-token:" + gitSetting.PersonalAccessToken + "@"),
-                        Provider = GitProvider.Gitlab,
-                        Name = x.Name,
-                        Username = gitSetting.Username
-                    }));
+                    var responseContent = response.GetContent();
+                    repositories.AddRange(responseContent
+                        .Where(x => x.DefaultBranch != null)
+                        .Select(x => new Repository()
+                        {
+                            HttpsUrl = x.HttpsUrl.Replace("//", "//gitlab-ci-token:" + gitSetting.PersonalAccessToken + "@"),
+                            Provider = GitProvider.Gitlab,
+                            Name = x.Name,
+                            Username = gitSetting.Username
+                        }));
 
                     nextPage = response.ResponseMessage.Headers.GetValues("Link").FirstOrDefault();
                     var match = regex.Match(nextPage);
