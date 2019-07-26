@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -39,15 +40,18 @@ namespace Fusonic.GitBackup
              {
                  var friendlyServiceName = service.Provider.ToString();
                  logger.LogInformation($"Fetching repositories from {friendlyServiceName} ...");
-                 
-                 var repositories = await service.GetRepositoryUrisAsync(settings.Git.Where(x => x.Type == service.Provider));
+
+                 var providerSettings = settings.Git.Where(x => x.Type == service.Provider);
+                 var repositories = await service.GetRepositoryUrisAsync(providerSettings);
+                 if (providerSettings.Any() && repositories.Count == 0)
+                     throw new InvalidOperationException($"{friendlyServiceName} API returned 0 repositories. Please check your credentials.");
 
                  Interlocked.Add(ref repositoryCount, repositories.Count);
                  logger.LogInformation($"Fetched {repositories.Count} repositories from {friendlyServiceName}. ({repositoryCount} total repositories to backup) ");
 
                  return repositories;
-             }, new ExecutionDataflowBlockOptions() { BoundedCapacity = 1000,  MaxDegreeOfParallelism = settings.Backup.MaxDegreeOfParallelism });
-            
+             }, new ExecutionDataflowBlockOptions() { BoundedCapacity = 1000, MaxDegreeOfParallelism = settings.Backup.MaxDegreeOfParallelism });
+
             var mirrorBlock = new ActionBlock<Repository>(
                 async repository =>
                 {
