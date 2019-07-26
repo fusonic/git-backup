@@ -31,11 +31,12 @@ namespace Fusonic.GitBackup
                 typeof(GithubService)
             });
 
-            var loggerBuilder = new LoggerFactory()
+            var globalLogger = new LoggerFactory()
                  .AddConsole()
                  .AddDebug()
                  .CreateLogger("globalLogger");
-            container.RegisterSingleton(loggerBuilder);
+
+            container.RegisterSingleton(globalLogger);
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
