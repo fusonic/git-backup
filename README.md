@@ -9,7 +9,7 @@ repositories in one run.
 * Email notification in error case
 * Configure the tool individually in the app-settings.json
 * Backup your repos with "git clone --mirror" to ensure the full backup of the repos with all branches
-* Rebuild a fully functional repository from your backup with a simple "git push"
+* Rebuild a fully functional repository from your backup with a simple "git clone"
 * Automaticaly builds a clear backup folder structure for you. (date/org/repopath/files)
 
 ## Setup
@@ -129,25 +129,22 @@ compiled dll file. With your dll file it will look something like this:
     @midnight dotnet /path/to/tool/out/fusonic-git-backup.dll
     
 ## Run GitBackup with Docker
-!IMPORTAINT!: Make sure that your "Destination" path in the app-settings.json is still set to
-/app/GitBackup since this will be the woking directory of the tool inside the docker container.
-
 You can build the docker image on you own but the fastest way to run your tool with docker is to 
 download the already built image from the Git repository and execute the downloaded docker image 
 as follows:
 
-    sudo docker run -v /ABSOLUTE/PATH/TO/BACKUP/DEST:/app/GitBackup -v /ABSOLUTE/PATH/TO/YOUR/CONSTUM/app-settings.overwrite.json:/app/app-settings.json 600138a77e6c
+	docker run --rm -v /ABSOLUTE/PATH/TO/BACKUP/DEST:/backup -v /ABSOLUTE/PATH/TO/YOUR/CUSTOMCONFIG/config.json:/app/app-settings.json fusonic/git-backup:latest
 
 * /ABSOLUTEPATH/TO/BACKUP/DEST => Set your absolute path to the destination path on your real machine here. This path 
 will be mounted to the /app/GitBackup witch is the working path of the tool inside the docker container.
-* /ABSOLUTE/PATH/TO/YOUR/CONSTUM => You need to mount your app-settings.json to tell the file what it has
+* /ABSOLUTE/PATH/TO/YOUR/CUSTOMCONFIG => You need to mount your app-settings.json to tell the file what it has
 to do.
 
 ### Docker cron job
 To execute the tool and create backups after regular time spans, implement a cron job with the docker run comand from above.
 
 ## Restore a Backup
-To restore a backup in a new repo create a new git repo and 'git push' the backup folder to the new repo.
+To restore a backup in a new repo simply clone the git repo from the backup location.
 
 ## Deadman Snitch
 Configure a Deaman Snitch to ensure your backup program is running as expected. The Deadman Snitch will wait for a life signal in a configurable period of time.
