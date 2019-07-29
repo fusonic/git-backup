@@ -10,7 +10,7 @@ using SimpleInjector.Lifestyles;
 
 namespace Fusonic.GitBackup
 {
-    public class Program
+    public static class Program
     {
         private static Container container;
 
@@ -42,10 +42,9 @@ namespace Fusonic.GitBackup
             using (AsyncScopedLifestyle.BeginScope(container))
             {
                 var settings = container.GetService<AppSettings>();
-                using (var client = new SmtpClient { ServerCertificateValidationCallback = (s, c, h, e) => true })
+                using (var client = new SmtpClient())
                 {
                     client.Connect(settings.Mail.Host, settings.Mail.Port, settings.Mail.UseSsl);
-                    client.AuthenticationMechanisms.Remove("XOAUTH2");
                     client.Authenticate(settings.Mail.Username, settings.Mail.Password);
 
                     var mailClient = new MailClient(settings, client);

@@ -12,7 +12,7 @@ using SimpleInjector.Lifestyles;
 
 namespace Fusonic.GitBackup
 {
-    static class Bootstrapper
+    internal static class Bootstrapper
     {
         internal static Container CreateContainer()
         {
@@ -24,7 +24,7 @@ namespace Fusonic.GitBackup
                     DefaultLifestyle = Lifestyle.Scoped,
                 }
             };
-            container.RegisterCollection<IGitService>(new[]
+            container.Collection.Register<IGitService>(new[]
             {
                 typeof(BitbucketService),
                 typeof(GitlabService),
@@ -36,7 +36,7 @@ namespace Fusonic.GitBackup
                  .AddDebug()
                  .CreateLogger("globalLogger");
 
-            container.RegisterSingleton(globalLogger);
+            container.RegisterInstance(globalLogger);
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
@@ -47,7 +47,7 @@ namespace Fusonic.GitBackup
 
             var settings = new AppSettings();
             configuration.Bind(settings);
-            container.RegisterSingleton(settings);
+            container.RegisterInstance(settings);
 
             container.Register<Func<IGitlabApi>>(() => () => RestClient.For<IGitlabApi>("https://gitlab.com/api/v4"));
             container.Register<Func<IGithubApi>>(() => () => RestClient.For<IGithubApi>("https://api.github.com"));
