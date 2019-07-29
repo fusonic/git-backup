@@ -34,10 +34,11 @@ namespace Fusonic.GitBackup.Services.Git
 
                     repositories.AddRange(response.GetContent().Select(x => new Repository()
                     {
-                        HttpsUrl = x.HttpsUrl.Replace("//", "//" + gitSetting.PersonalAccessToken + "@"),
+                        HttpsUrl = x.HttpsUrl,
                         Provider = GitProvider.Github,
                         Name = x.Name,
-                        Username = gitSetting.Username
+                        Username = gitSetting.Username,
+                        PersonalAccessToken = gitSetting.PersonalAccessToken
                     }));
 
                     if (response.ResponseMessage.Headers.Contains("Link"))

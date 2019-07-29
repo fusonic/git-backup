@@ -34,16 +34,17 @@ namespace Fusonic.GitBackup.Services.Git
                     else
                         resp = await api.GetRepositoriesAsync("member");
 
-                    allRepositories.AddRange((from v in resp.Values
-                                              from c in v.Links.Clone
-                                              where c.Name == "https"
-                                              select new Repository()
-                                              {
-                                                  HttpsUrl = c.Href.Replace("@", ":" + gitSetting.PersonalAccessToken + "@"),
-                                                  Provider = GitProvider.Bitbucket,
-                                                  Name = v.Name,
-                                                  Username = gitSetting.Username
-                                              }));
+                    allRepositories.AddRange(from v in resp.Values
+                                             from c in v.Links.Clone
+                                             where c.Name == "https"
+                                             select new Repository()
+                                             {
+                                                 HttpsUrl = c.Href,
+                                                 Provider = GitProvider.Bitbucket,
+                                                 Name = v.Name,
+                                                 Username = gitSetting.Username,
+                                                 PersonalAccessToken = gitSetting.PersonalAccessToken
+                                             });
                     if (resp.Next != null)
                         after = "?" + resp.Next.Split(new string[] { "?", "&" }, StringSplitOptions.None)[1];
                     else

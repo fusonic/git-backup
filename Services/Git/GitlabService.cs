@@ -38,10 +38,11 @@ namespace Fusonic.GitBackup.Services.Git
                         .Where(x => x.DefaultBranch != null)
                         .Select(x => new Repository()
                         {
-                            HttpsUrl = x.HttpsUrl.Replace("//", "//gitlab-ci-token:" + gitSetting.PersonalAccessToken + "@"),
+                            HttpsUrl = x.HttpsUrl.Replace("//", "//gitlab-ci-token@"),
                             Provider = GitProvider.Gitlab,
                             Name = x.Name,
-                            Username = gitSetting.Username
+                            Username = gitSetting.Username,
+                            PersonalAccessToken = gitSetting.PersonalAccessToken
                         }));
 
                     nextPage = response.ResponseMessage.Headers.GetValues("Link").FirstOrDefault();

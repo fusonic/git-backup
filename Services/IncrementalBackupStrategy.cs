@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Fusonic.GitBackup.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Fusonic.GitBackup.Services
 {
     internal class IncrementalBackupStrategy : IBackupStrategy
     {
         private readonly AppSettings settings;
-        private readonly ILogger logger;
 
-        public IncrementalBackupStrategy(AppSettings settings, ILogger logger)
-        {
-            this.settings = settings;
-            this.logger = logger;
-        }
+        public IncrementalBackupStrategy(AppSettings settings)
+            => this.settings = settings;
 
         public Task Backup(Repository repository)
         {
@@ -25,7 +21,7 @@ namespace Fusonic.GitBackup.Services
                 var path = $"{settings.Backup.Local.Destination}/{repository.Provider}/{repository.Name}";
                 var cmd = Directory.Exists(path)
                     ? $"--git-dir={path} remote update"
-                    : $@"clone --mirror {repository.HttpsUrl} {path}";
+                    : $"clone --mirror {repository.HttpsUrl} {path}";
 
                 var process = new Process
                 {
@@ -33,9 +29,13 @@ namespace Fusonic.GitBackup.Services
                     {
                         FileName = "git",
                         Arguments = cmd,
-                        RedirectStandardError = true
+                        RedirectStandardError = true,
                     }
                 };
+
+                process.StartInfo.Environment.Add("GIT_BACKUP_ACCESS_TOKEN", repository.PersonalAccessToken);
+                process.StartInfo.Environment.Add("GIT_ASKPASS", Path.GetFullPath("git-askpass" + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".cmd" : ".sh")));
+
                 process.Start();
                 var errorOutput = process.StandardError.ReadToEnd();
                 process.WaitForExit();

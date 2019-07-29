@@ -12,6 +12,8 @@ namespace Fusonic.GitBackup.Models
             public GitProvider Type { get; set; }
             public string Username { get; set; }
             public string PersonalAccessToken { get; set; }
+
+            public override string ToString() => Type.ToString();
         }
         
         public class BackupSettings

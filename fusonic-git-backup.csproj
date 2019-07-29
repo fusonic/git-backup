@@ -28,4 +28,12 @@
   <ItemGroup Condition="Exists('app-settings.overwrite.json')">
     <None Include="app-settings.overwrite.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="git-askpass.cmd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="git-askpass.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
