@@ -24,7 +24,7 @@ build_image:
     - docker build -t $CI_REGISTRY_IMAGE .
     - docker push $CI_REGISTRY_IMAGE:latest
     - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PW
-    - docker tag $CI_REGISTRY_NAME fusonic/git-backup:latest
+    - docker tag $CI_REGISTRY_IMAGE:latest fusonic/git-backup:latest
     - docker push fusonic/git-backup:latest
   only:
     - master
