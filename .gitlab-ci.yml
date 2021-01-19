@@ -3,7 +3,7 @@ stages:
   - build_image
 
 build:
-  image: mcr.microsoft.com/dotnet/core/sdk:3.1
+  image: mcr.microsoft.com/dotnet/sdk:5.0
   stage: build
   before_script:
     - dotnet restore
