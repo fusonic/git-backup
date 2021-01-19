@@ -29,19 +29,27 @@ namespace Fusonic.GitBackup
             catch (Exception ex)
             {
                 if (container == null) throw;
-                SendErrorMail(ex);
+                var sentMail = SendErrorMail(ex);
                 using (AsyncScopedLifestyle.BeginScope(container))
                 {
-                    container.GetService<ILogger>().LogError("An error occured. We sent an email with a detailed error message to the email defined in the app-settings.json.");
+                    var logger = container.GetService<ILogger>();
+                    if (sentMail)
+                    {
+                        logger.LogError("An error occured. An email with detailed error message has been sent to the address defined in the app-settings.json.");
+                    }
+                    logger.LogError(ex.ToString());
                 }
             }
         }
 
-        private static void SendErrorMail(Exception ex)
+        private static bool SendErrorMail(Exception ex)
         {
             using (AsyncScopedLifestyle.BeginScope(container))
             {
                 var settings = container.GetService<AppSettings>();
+                if (string.IsNullOrEmpty(settings.Mail.Host))
+                    return false;
+
                 using (var client = new SmtpClient())
                 {
                     client.Connect(settings.Mail.Host, settings.Mail.Port, settings.Mail.UseSsl);
@@ -49,6 +57,7 @@ namespace Fusonic.GitBackup
 
                     var mailClient = new MailClient(settings, client);
                     mailClient.SendMail("Git-Backup Fatal Error!", ex.ToString());
+                    return true;
                 }
             }
         }
