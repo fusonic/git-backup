@@ -2,6 +2,13 @@ stages:
   - build
   - build_image
 
+variables:
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs/${CI_JOB_ID}"
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: "/certs/${CI_JOB_ID}/client"
+  DOCKER_VERSION: "19.03"
+
 build:
   image: mcr.microsoft.com/dotnet/sdk:5.0
   stage: build
