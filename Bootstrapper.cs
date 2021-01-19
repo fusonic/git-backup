@@ -5,6 +5,7 @@ using Fusonic.GitBackup.Services.Api;
 using Fusonic.GitBackup.Services.Git;
 using Fusonic.GitBackup.Services.Heartbeat;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RestEase;
 using SimpleInjector;
@@ -31,12 +32,13 @@ namespace Fusonic.GitBackup
                 typeof(GithubService)
             });
 
-            var globalLogger = new LoggerFactory()
-                 .AddConsole()
-                 .AddDebug()
-                 .CreateLogger("globalLogger");
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddLogging(builder => builder.AddConsole());
 
-            container.RegisterInstance(globalLogger);
+            serviceCollection.AddSimpleInjector(container, action => action.AddLogging());
+
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+            serviceProvider.UseSimpleInjector(container);
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
