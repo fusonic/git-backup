@@ -34,4 +34,4 @@ build_image:
     - docker tag $CI_REGISTRY_IMAGE:latest fusonic/git-backup:latest
     - docker push fusonic/git-backup:latest
   only:
-    - master
+    - main
