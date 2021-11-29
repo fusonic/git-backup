@@ -8,9 +8,12 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 	<ImplicitUsings>true</ImplicitUsings>
+	<UserSecretsId>7c038160-caba-4295-bf29-f8ca2cbf333c</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="CliWrap" Version="3.3.3" />
     <PackageReference Include="MailKit" Version="2.15.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="6.0.0" />

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using CliWrap;
+using CliWrap.Buffered;
 using Fusonic.GitBackup.Models;
 using Microsoft.Extensions.Logging;
 
@@ -17,27 +18,14 @@ internal class FullBackupStrategy : IBackupStrategy
         timestampFolderName = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
     }
 
-    public Task Backup(Repository repository)
+    public async Task Backup(Repository repository)
     {
-        return Task.Run(() =>
-        {
-            var process = new Process
-            {
-                StartInfo =
-                {
-                        FileName = "git",
-                        Arguments =
-                            $@"clone --mirror {repository.HttpsUrl} {settings.Backup.Local.Destination}/{timestampFolderName}/{repository.Provider}/{repository.Name}",
-                        RedirectStandardError = true
-                }
-            };
-            process.Start();
-            var errorOutput = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+        var result = await Cli.Wrap("git")
+            .WithArguments($"clone --mirror {repository.HttpsUrl} {settings.Backup.Local.Destination}/{timestampFolderName}/{repository.Provider}/{repository.Name}")
+            .ExecuteBufferedAsync();
 
-            if (process.ExitCode != 0)
-                throw new Exception(errorOutput);
-        });
+        if (result.ExitCode != 0)
+            throw new Exception(result.StandardError);
     }
 
     public Task Cleanup()
@@ -47,7 +35,7 @@ internal class FullBackupStrategy : IBackupStrategy
 
         return Task.Run(() =>
         {
-            foreach (var dir in Directory.GetDirectories(settings.Backup.Local.Destination)
+            foreach (var dir in Directory.EnumerateDirectories(settings.Backup.Local.Destination)
                 .Where(x => DateTime.Now - Directory.GetLastWriteTime(x)
                             > TimeSpan.FromDays(deleteAfterDays)))
             {

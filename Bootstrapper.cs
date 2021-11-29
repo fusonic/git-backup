@@ -42,7 +42,8 @@ internal static class Bootstrapper
         var builder = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("app-settings.json", false)
-            .AddJsonFile("app-settings.overwrite.json", true);
+            .AddJsonFile("app-settings.overwrite.json", true)
+            .AddUserSecrets<Program>();
 
         var configuration = builder.Build();
 

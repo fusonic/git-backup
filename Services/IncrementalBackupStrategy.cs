@@ -1,5 +1,6 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+using CliWrap;
+using CliWrap.Buffered;
 using Fusonic.GitBackup.Models;
 
 namespace Fusonic.GitBackup.Services;
@@ -11,35 +12,22 @@ internal class IncrementalBackupStrategy : IBackupStrategy
     public IncrementalBackupStrategy(AppSettings settings)
         => this.settings = settings;
 
-    public Task Backup(Repository repository)
+    public async Task Backup(Repository repository)
     {
-        return Task.Run(() =>
-        {
-            var path = $"{settings.Backup.Local.Destination}/{repository.Provider}/{repository.Name}";
-            var cmd = Directory.Exists(path)
-                ? $"--git-dir={path} remote update"
-                : $"clone --mirror {repository.HttpsUrl} {path}";
+        var path = $"{settings.Backup.Local.Destination}/{repository.Provider}/{repository.Name}";
+        var cmd = Directory.Exists(path)
+            ? $"--git-dir={path} remote update"
+            : $"clone --mirror {repository.HttpsUrl} {path}";
 
-            var process = new Process
-            {
-                StartInfo =
-                {
-                        FileName = "git",
-                        Arguments = cmd,
-                        RedirectStandardError = true,
-                }
-            };
+        var result = await Cli.Wrap("git")
+            .WithArguments(cmd)
+            .WithEnvironmentVariables(env => env
+                .Set("GIT_BACKUP_ACCESS_TOKEN", repository.PersonalAccessToken)
+                .Set("GIT_ASKPASS", Path.GetFullPath("git-askpass" + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".cmd" : ".sh"))))
+            .ExecuteBufferedAsync();
 
-            process.StartInfo.Environment.Add("GIT_BACKUP_ACCESS_TOKEN", repository.PersonalAccessToken);
-            process.StartInfo.Environment.Add("GIT_ASKPASS", Path.GetFullPath("git-askpass" + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".cmd" : ".sh")));
-
-            process.Start();
-            var errorOutput = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-                throw new Exception(errorOutput);
-        });
+        if (result.ExitCode != 0)
+            throw new Exception(result.StandardError);
     }
 
     public Task Cleanup() => Task.CompletedTask; // No cleanup when incrementally backuping
