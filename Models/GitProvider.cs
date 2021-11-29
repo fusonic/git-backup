@@ -1,9 +1,8 @@
-﻿namespace Fusonic.GitBackup
+﻿namespace Fusonic.GitBackup;
+
+public enum GitProvider
 {
-    public enum GitProvider
-    {
-        Bitbucket,
-        Github,
-        Gitlab
-    }
+    Bitbucket,
+    Github,
+    Gitlab
 }

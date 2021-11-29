@@ -1,9 +1,6 @@
-using System.Threading.Tasks;
+namespace Fusonic.GitBackup.Services.Heartbeat;
 
-namespace Fusonic.GitBackup.Services.Heartbeat
+public interface IHeartbeat
 {
-    public interface IHeartbeat
-    {
-        Task Notify();
-    }
+    Task Notify();
 }

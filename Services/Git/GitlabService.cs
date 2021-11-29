@@ -1,59 +1,54 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Fusonic.GitBackup.Models;
 using Fusonic.GitBackup.Services.Api;
 using static Fusonic.GitBackup.Models.AppSettings;
 
-namespace Fusonic.GitBackup.Services.Git
+namespace Fusonic.GitBackup.Services.Git;
+
+internal class GitlabService : IGitService
 {
-    internal class GitlabService : IGitService
+    private readonly Func<IGitlabApi> apiFactory;
+    private readonly Regex regex = new Regex(@"<(.*)\?(.*)>; rel=""next""", RegexOptions.CultureInvariant);
+
+    public GitlabService(Func<IGitlabApi> apiFactory)
     {
-        private readonly Func<IGitlabApi> apiFactory;
-        private readonly Regex regex = new Regex(@"<(.*)\?(.*)>; rel=""next""", RegexOptions.CultureInvariant);
+        this.apiFactory = apiFactory;
+    }
 
-        public GitlabService(Func<IGitlabApi> apiFactory)
+    public GitProvider Provider => GitProvider.Gitlab;
+
+    public async Task<List<Repository>> GetRepositoryUrisAsync(IEnumerable<GitSettings> settings)
+    {
+        var repositories = new List<Repository>();
+        foreach (var gitSetting in settings)
         {
-            this.apiFactory = apiFactory;
-        }
+            var api = apiFactory();
+            api.PrivateToken = gitSetting.PersonalAccessToken;
 
-        public GitProvider Provider => GitProvider.Gitlab;
-
-        public async Task<List<Repository>> GetRepositoryUrisAsync(IEnumerable<GitSettings> settings)
-        {
-            var repositories = new List<Repository>();
-            foreach (var gitSetting in settings)
+            var nextPage = "?per_page=1000&membership=true";
+            while (!string.IsNullOrEmpty(nextPage))
             {
-                var api = apiFactory();
-                api.PrivateToken = gitSetting.PersonalAccessToken;
+                var response = await api.GetRepositoriesAsync(nextPage);
+                var responseContent = response.GetContent();
+                repositories.AddRange(responseContent
+                    .Where(x => x.DefaultBranch != null)
+                    .Select(x => new Repository()
+                    {
+                        HttpsUrl = x.HttpsUrl.Replace("//", "//gitlab-ci-token@"),
+                        Provider = GitProvider.Gitlab,
+                        Name = x.Name,
+                        Username = gitSetting.Username,
+                        PersonalAccessToken = gitSetting.PersonalAccessToken
+                    }));
 
-                var nextPage = "?per_page=1000&membership=true";
-                while (!string.IsNullOrEmpty(nextPage))
-                {
-                    var response = await api.GetRepositoriesAsync(nextPage);
-                    var responseContent = response.GetContent();
-                    repositories.AddRange(responseContent
-                        .Where(x => x.DefaultBranch != null)
-                        .Select(x => new Repository()
-                        {
-                            HttpsUrl = x.HttpsUrl.Replace("//", "//gitlab-ci-token@"),
-                            Provider = GitProvider.Gitlab,
-                            Name = x.Name,
-                            Username = gitSetting.Username,
-                            PersonalAccessToken = gitSetting.PersonalAccessToken
-                        }));
-
-                    nextPage = response.ResponseMessage.Headers.GetValues("Link").FirstOrDefault();
-                    var match = regex.Match(nextPage);
-                    if (match.Success)
-                        nextPage = "?" + match.Groups[2].Value;
-                    else
-                        nextPage = null;
-                }
+                nextPage = response.ResponseMessage.Headers.GetValues("Link").FirstOrDefault();
+                var match = regex.Match(nextPage);
+                if (match.Success)
+                    nextPage = "?" + match.Groups[2].Value;
+                else
+                    nextPage = null;
             }
-            return repositories;
         }
+        return repositories;
     }
 }

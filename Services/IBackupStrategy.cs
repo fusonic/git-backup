@@ -1,11 +1,9 @@
-﻿using System.Threading.Tasks;
-using Fusonic.GitBackup.Models;
+﻿using Fusonic.GitBackup.Models;
 
-namespace Fusonic.GitBackup.Services
+namespace Fusonic.GitBackup.Services;
+
+interface IBackupStrategy
 {
-    interface IBackupStrategy
-    {
-        Task Backup(Repository repository);
-        Task Cleanup();
-    }
+    Task Backup(Repository repository);
+    Task Cleanup();
 }

@@ -1,13 +1,11 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
-namespace Fusonic.GitBackup.Services
+namespace Fusonic.GitBackup.Services;
+
+internal static class TokenGenerator
 {
-    internal static class TokenGenerator
+    public static string GenerateBase64Token(string username, string password)
     {
-        public static string GenerateBase64Token(string username, string password)
-        {
-            return Convert.ToBase64String(Encoding.ASCII.GetBytes(username + ":" + password));
-        }
+        return Convert.ToBase64String(Encoding.ASCII.GetBytes(username + ":" + password));
     }
 }

@@ -1,7 +1,6 @@
-﻿namespace Fusonic.GitBackup.Services
+﻿namespace Fusonic.GitBackup.Services;
+
+public interface IMailClient
 {
-    public interface IMailClient
-    {
-        void SendMail(string subject, string body);
-    }
+    void SendMail(string subject, string body);
 }
