@@ -7,10 +7,10 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs/${CI_JOB_ID}"
   DOCKER_TLS_VERIFY: 1
   DOCKER_CERT_PATH: "/certs/${CI_JOB_ID}/client"
-  DOCKER_VERSION: "19.03"
+  DOCKER_VERSION: "20.03"
 
 build:
-  image: mcr.microsoft.com/dotnet/sdk:5.0
+  image: mcr.microsoft.com/dotnet/sdk:6.0
   stage: build
   before_script:
     - dotnet restore
