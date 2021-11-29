@@ -19,15 +19,13 @@ internal class IncrementalBackupStrategy : IBackupStrategy
             ? $"--git-dir={path} remote update"
             : $"clone --mirror {repository.HttpsUrl} {path}";
 
-        var result = await Cli.Wrap("git")
+        await Cli.Wrap("git")
             .WithArguments(cmd)
             .WithEnvironmentVariables(env => env
                 .Set("GIT_BACKUP_ACCESS_TOKEN", repository.PersonalAccessToken)
                 .Set("GIT_ASKPASS", Path.GetFullPath("git-askpass" + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".cmd" : ".sh"))))
+            .WithValidation(CommandResultValidation.ZeroExitCode)
             .ExecuteBufferedAsync();
-
-        if (result.ExitCode != 0)
-            throw new Exception(result.StandardError);
     }
 
     public Task Cleanup() => Task.CompletedTask; // No cleanup when incrementally backuping

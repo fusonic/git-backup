@@ -20,12 +20,10 @@ internal class FullBackupStrategy : IBackupStrategy
 
     public async Task Backup(Repository repository)
     {
-        var result = await Cli.Wrap("git")
+        await Cli.Wrap("git")
             .WithArguments($"clone --mirror {repository.HttpsUrl} {settings.Backup.Local.Destination}/{timestampFolderName}/{repository.Provider}/{repository.Name}")
+            .WithValidation(CommandResultValidation.ZeroExitCode)
             .ExecuteBufferedAsync();
-
-        if (result.ExitCode != 0)
-            throw new Exception(result.StandardError);
     }
 
     public Task Cleanup()
