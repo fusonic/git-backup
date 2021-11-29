@@ -113,3 +113,6 @@ dotnet_style_qualification_for_field = false:suggestion
 #prefer properties not to be prefaced with this. or Me. in Visual Basic
 dotnet_style_qualification_for_property = false:suggestion
 csharp_style_namespace_declarations=file_scoped:warning
+
+# RCS1090: Add call to 'ConfigureAwait' (or vice versa).
+dotnet_diagnostic.RCS1090.severity = none

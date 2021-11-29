@@ -50,9 +50,9 @@ internal static class Bootstrapper
         configuration.Bind(settings);
         container.RegisterInstance(settings);
 
-        container.Register<Func<IGitlabApi>>(() => () => RestClient.For<IGitlabApi>("https://gitlab.com/api/v4"));
-        container.Register<Func<IGithubApi>>(() => () => RestClient.For<IGithubApi>("https://api.github.com"));
-        container.Register<Func<IBitbucketApi>>(() => () => RestClient.For<IBitbucketApi>("https://api.bitbucket.org/2.0"));
+        container.Register(() => () => RestClient.For<IGitlabApi>("https://gitlab.com/api/v4"));
+        container.Register(() => () => RestClient.For<IGithubApi>("https://api.github.com"));
+        container.Register(() => () => RestClient.For<IBitbucketApi>("https://api.bitbucket.org/2.0"));
 
         container.Register(typeof(IHeartbeat), () =>
             !string.IsNullOrEmpty(settings.DeadmanssnitchUrl)

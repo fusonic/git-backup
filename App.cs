@@ -60,7 +60,6 @@ internal class App
                 Interlocked.Decrement(ref pending);
             }, new ExecutionDataflowBlockOptions() { BoundedCapacity = 1000, MaxDegreeOfParallelism = settings.Backup.MaxDegreeOfParallelism, });
 
-
         fetchBlock.LinkTo(mirrorBlock, new DataflowLinkOptions() { PropagateCompletion = true });
 
         foreach (var service in gitServices)

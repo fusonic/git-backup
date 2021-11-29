@@ -2,7 +2,7 @@ namespace Fusonic.GitBackup.Models;
 
 public class AppSettings
 {
-    public GitSettings[] Git { get; set; }
+    public GitSettings[] Git { get; set; } = new GitSettings[0];
     public BackupSettings Backup { get; set; }
     public MailSettings Mail { get; set; }
     public string DeadmanssnitchUrl { get; set; }
