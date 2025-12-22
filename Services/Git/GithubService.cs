@@ -6,12 +6,9 @@ using static Fusonic.GitBackup.Models.AppSettings;
 
 namespace Fusonic.GitBackup.Services.Git;
 
-internal class GithubService : IGitService
+internal class GithubService(Func<IGithubApi> apiFactory) : IGitService
 {
-    private readonly Func<IGithubApi> apiFactory;
-    private readonly Regex regex = new Regex(@"<(.*)\?(.*)>; rel=""next""", RegexOptions.CultureInvariant);
-
-    public GithubService(Func<IGithubApi> apiFactory) => this.apiFactory = apiFactory;
+    private readonly Regex regex = new(@"<(.*)\?(.*)>; rel=""next""", RegexOptions.CultureInvariant);
 
     public GitProvider Provider => GitProvider.Github;
 

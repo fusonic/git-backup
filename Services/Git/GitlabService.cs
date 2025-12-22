@@ -5,15 +5,9 @@ using static Fusonic.GitBackup.Models.AppSettings;
 
 namespace Fusonic.GitBackup.Services.Git;
 
-internal class GitlabService : IGitService
+internal class GitlabService(Func<IGitlabApi> apiFactory) : IGitService
 {
-    private readonly Func<IGitlabApi> apiFactory;
-    private readonly Regex regex = new Regex(@"<(.*)\?(.*)>; rel=""next""", RegexOptions.CultureInvariant);
-
-    public GitlabService(Func<IGitlabApi> apiFactory)
-    {
-        this.apiFactory = apiFactory;
-    }
+    private readonly Regex regex = new(@"<(.*)\?(.*)>; rel=""next""", RegexOptions.CultureInvariant);
 
     public GitProvider Provider => GitProvider.Gitlab;
 

@@ -24,13 +24,7 @@ internal static class Bootstrapper
                     DefaultLifestyle = Lifestyle.Scoped,
                 }
         };
-        container.Collection.Register<IGitService>(new[]
-        {
-                typeof(BitbucketService),
-                typeof(GitlabService),
-                typeof(GithubService)
-            });
-
+        
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddLogging(builder => builder.AddConsole());
 
@@ -51,9 +45,16 @@ internal static class Bootstrapper
         configuration.Bind(settings);
         container.RegisterInstance(settings);
 
-        container.Register(() => () => RestClient.For<IGitlabApi>("https://gitlab.com/api/v4"));
-        container.Register(() => () => RestClient.For<IGithubApi>("https://api.github.com"));
-        container.Register(() => () => RestClient.For<IBitbucketApi>("https://api.bitbucket.org/2.0"));
+        container.RegisterInstance(() => RestClient.For<IGitlabApi>("https://gitlab.com/api/v4"));
+        container.RegisterInstance(() => RestClient.For<IGithubApi>("https://api.github.com"));
+        container.RegisterInstance(() => RestClient.For<IBitbucketApi>("https://api.bitbucket.org/2.0"));
+
+        container.Collection.Register<IGitService>(
+        [
+            typeof(BitbucketService),
+            typeof(GitlabService),
+            typeof(GithubService)
+        ]);
 
         container.Register(typeof(IHeartbeat), () =>
             !string.IsNullOrEmpty(settings.DeadmanssnitchUrl)

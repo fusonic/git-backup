@@ -5,12 +5,8 @@ using static Fusonic.GitBackup.Models.AppSettings;
 
 namespace Fusonic.GitBackup.Services.Git;
 
-internal class BitbucketService : IGitService
+internal class BitbucketService(Func<IBitbucketApi> apiFactory) : IGitService
 {
-    private readonly Func<IBitbucketApi> apiFactory;
-
-    public BitbucketService(Func<IBitbucketApi> apiFactory) => this.apiFactory = apiFactory;
-
     public GitProvider Provider => GitProvider.Bitbucket;
 
     public async Task<List<Repository>> GetRepositoryUrisAsync(IEnumerable<GitSettings> settings)
@@ -42,7 +38,7 @@ internal class BitbucketService : IGitService
                                              PersonalAccessToken = gitSetting.PersonalAccessToken
                                          });
                 if (resp.Next != null)
-                    after = "?" + resp.Next.Split(new string[] { "?", "&" }, StringSplitOptions.None)[1];
+                    after = "?" + resp.Next.Split(["?", "&"], StringSplitOptions.None)[1];
                 else
                     after = null;
             }
