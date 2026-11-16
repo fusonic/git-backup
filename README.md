@@ -1,165 +1,284 @@
-# Fusonic-Git-Backup
+<div align="center">
 
-## What is Fusonic-Git-Backup?
-Fusonic-Git-Backup is a dotnet core based tool to backup your github, gitlab and bitbucket 
-repositories in one run.
+# Fusonic Git Backup
+
+**Back up all your GitHub, GitLab and Bitbucket repositories in a single run.**
+
+Full mirrors with every branch and tag, incremental updates, parallel execution, error mails and dead man's switch monitoring.
+
+[![License: MIT](https://img.shields.io/github/license/fusonic/git-backup)](LICENSE)
+[![Docker Pulls](https://img.shields.io/docker/pulls/fusonic/git-backup?logo=docker)](https://hub.docker.com/r/fusonic/git-backup)
+[![.NET](https://img.shields.io/badge/.NET-11-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+
+</div>
+
+---
+
+## Table of contents
+
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Access tokens](#access-tokens)
+- [Running it](#running-it)
+- [Backup layout and strategies](#backup-layout-and-strategies)
+- [Restoring a backup](#restoring-a-backup)
+- [Monitoring](#monitoring)
+- [FAQ](#faq)
+- [License](#license)
 
 ## Features
-* Full Docker support
-* Email notification in error case
-* Configure the tool individually in the app-settings.json
-* Backup your repos with "git clone --mirror" to ensure the full backup of the repos with all branches
-* Rebuild a fully functional repository from your backup with a simple "git clone"
-* Automaticaly builds a clear backup folder structure for you. (date/org/repopath/files)
 
-## Setup
-### Config File
-If you want to run the tool inside the docker container, set the "Destination" to "/app/GitBackup". 
-In the projects root folder you can find the app-settings.json to setup the tool for your needs. 
-Enter the following user specific information and replace the placeholders to execute the tool properly:
+- **Three providers, one run**: GitHub, GitLab and Bitbucket, with as many accounts per provider as you like.
+- **Complete mirrors**: uses `git clone --mirror`, so every branch, tag and ref is included.
+- **Incremental by default**: the first run clones, every later run only fetches what changed.
+- **Fast**: repositories are processed in parallel (`MaxDegreeOfParallelism`).
+- **Docker ready**: ships as `fusonic/git-backup`, no .NET installation needed.
+- **Fail loudly**: an email with the full error is sent when a run fails, and an optional [Dead Man's Snitch](https://deadmanssnitch.com) alerts you when it doesn't run at all.
+- **Easy restore**: a backup is a normal bare git repository, so a plain `git clone` brings it back.
 
-    {
-      "Git": [
-        {
-          "Type": "Bitbucket",
-          "Username": "Bituser123",
-          "PersonalAccessToken": "YourPrivateAccessToken"
-        },
-        {
-          "Type": "Github",
-          "Username": "Bituser123",
-          "PersonalAccessToken": "YourPrivateAccessToken"
-        },
-        {
-          "Type": "Gitlab",
-          "Username": "YourUser1",
-          "PersonalAccessToken": "YourPrivateAccessToken"
-        },
-        {
-          "Type": "Gitlab",
-          "Username": "YourUser2",
-          "PersonalAccessToken": "YourPrivateAccessToken"
-        }
-      ],
-      "Backup": {
-        "Local": {
-          "DeleteAfterDays": "1",
-          "Destination": "/my/absoulte/path/to/backup/directory"
-        }
-      },
-      "Mail": {
-        "Host": "mailhoster.net",
-        "Port": "25",
-        "Username": "your.email@mail.com",
-        "Password": "yourpassword",
-        "UseSsl": "false",
-        "Sender": {
-          "Address": "your.email@mail.com",
-          "Name": "Max Musterman"
-        },
-        "Receiver": {
-          "Address": "Receiver.email@mail.com",
-          "Name": "Manuel Musterman"
-        }
-      },
-      "DeadmanssnitchUrl": "You can delete this if you dont use a dead man snitch"
+## Quick start
+
+1. Create an `app-settings.json` (see [Configuration](#configuration)):
+
+   ```json
+   {
+     "Git": [
+       { "Type": "Github", "Username": "your-user", "PersonalAccessToken": "ghp_..." }
+     ],
+     "Backup": {
+       "Local": { "Destination": "/app/GitBackup" }
+     }
+   }
+   ```
+
+2. Run the image:
+
+   ```sh
+   docker run --rm \
+     -v /absolute/path/to/backups:/app/GitBackup \
+     -v /absolute/path/to/app-settings.json:/app/app-settings.json \
+     fusonic/git-backup:latest
+   ```
+
+3. Find your repositories in `/absolute/path/to/backups`. Schedule the command (see [Running it](#running-it)) and you're done.
+
+## Configuration
+
+The tool reads `app-settings.json` (required), then `app-settings.overwrite.json` (optional) and .NET user secrets, in that order. Later sources win.
+
+Full example:
+
+```json
+{
+  "Git": [
+    { "Type": "Bitbucket", "Username": "bit-user", "PersonalAccessToken": "app-password" },
+    { "Type": "Github", "Username": "gh-user", "PersonalAccessToken": "ghp_..." },
+    { "Type": "Gitlab", "Username": "gl-user-1", "PersonalAccessToken": "glpat-..." },
+    { "Type": "Gitlab", "Username": "gl-user-2", "PersonalAccessToken": "glpat-..." }
+  ],
+  "Backup": {
+    "MaxDegreeOfParallelism": 8,
+    "Local": {
+      "Destination": "/app/GitBackup",
+      "Strategy": "Incremental",
+      "DeleteAfterDays": 1
     }
+  },
+  "Mail": {
+    "Host": "smtp.example.com",
+    "Port": 587,
+    "Username": "backup@example.com",
+    "Password": "secret",
+    "UseSsl": false,
+    "Sender": { "Address": "backup@example.com", "Name": "Git Backup" },
+    "Receiver": { "Address": "ops@example.com", "Name": "Ops Team" }
+  },
+  "DeadmanssnitchUrl": "https://nosnch.in/xxxxxxxxxx"
+}
+```
 
-* Git: In this section you can configure your Gitlab, Github and Bitbucket account. If you dont 
-need one or two of the connections, simply remove them from the config. You can configure as many
-users as you want.
-    * Type: Enter the type of your Account here. It should be either "Bitbucket", "Github" or 
-    "Gitlab".
-    * Username: Enter the username of your account here. You can find your username in your user 
-    settings on each platform.
-    * PersonalAccessToken: On each platform the "PersonalAccessToken" is named differently. 
-    You need the generate a "PersonalAccessToken" for each platform to establish a connection 
-    with the Git-Api and to grant the right permissions to your backup account. Generate your 
-    passwords on their websites. Read permissions for repos should be enough.
-        * Bitbucket: Go to "user settings -> App password" to generate your password.
-        * Gitlab: Go to "user settings -> Access Tokens" to generate a token. Watch out for 
-        the expire date. Gitlab is the only platform that lets the token expire after a given 
-        time. Renew your token when your token expires. You can select the date by your own.
-        * Github: Go to "user settings -> Personal access tokens" to generate a token.
-    * Backup: Here you can configure you backup settings.
-        * Local: Configure to store your backups directly on your machine.
-            * DeleteAfterDays: Tells after how many days an old backup should be deleted 
-            automaticaly.
-            * Destination: The path to the folder where the backups should be stored. If you use Docker, 
-            this sould be set to /app/GitBackup
-    * Mail: Setup the Mailserver to send messages in error case. Get all the informations about 
-    your mail settings from your mail server provider. For example see the gmail settings: 
-    https://support.google.com/a/answer/176600?hl=en
-        * Host: The address, IP or Url, to you mail server host.
-        * Port: The prefered port.
-        * Username: On gmail for example, its your email address
-        * Password: The password of your email account
-        * UseSsl: Tells if you want to use a ssh connection (needed if you use port 465)
-        * Sender: Information about the sender of the emails:
-            * Address: Address of the sender
-            * Name: Name of the sender
-        * Receiver: Information about the Receiver of the emails:
-            * Address: Address of the Receiver
-            * Name: Name of the Receiver
-* DeadmanssnitchUrl: Paste your uri to your deadmansnitch here to call it whenever the backup succeeds.
+### `Git`
 
-## Run GitBackup locally
-To run your tool localy you need to follow three steps:
+One entry per account. Remove providers you don't need.
 
-### Install dotnet and git
-Install dotnet and git on your machine to run your tool.
+| Key | Description |
+|---|---|
+| `Type` | `Github`, `Gitlab` or `Bitbucket` |
+| `Username` | Your username on that platform. Not used for GitLab. |
+| `PersonalAccessToken` | Token or app password, see [Access tokens](#access-tokens) |
 
-### Execute the tool
-Now after configuring ssh, the app-settings.json and a dotnet environment you are all done and 
-can try out the tool by running the following command in the commandline in your tools directory
+Which repositories are backed up:
 
-    > cd /path/to/tool
-    > dotnet run
-    
-You can either use the run command to run it or create a release folder to directly execute your
-compiled dll file. This will store your dll's in the out folder.
+| Provider | Scope |
+|---|---|
+| GitHub | All repositories the user has access to (owned, collaborator, organization) |
+| GitLab | All projects the user is a member of. Empty projects are skipped. |
+| Bitbucket | All repositories the user is a member of |
 
-    > cd /path/to/tool
-    > dotnet publish git-backup.sln -c Release -o out
+### `Backup`
 
-### Local Cron-Job
-To run your backup tool as often as you want, install a cronjob, that executes dotnet run or your
-compiled dll file. With your dll file it will look something like this:
+| Key | Default | Description |
+|---|---|---|
+| `MaxDegreeOfParallelism` | `8` | How many repositories are fetched and cloned at the same time |
+| `Local.Destination` | `/app/GitBackup` | Target folder. Inside Docker, keep `/app/GitBackup` and mount your host folder there. |
+| `Local.Strategy` | `Incremental` | `Incremental` or `Full`, see [Backup layout and strategies](#backup-layout-and-strategies) |
+| `Local.DeleteAfterDays` | `1` | Only used by `Full`: delete backups older than this many days |
 
-    @midnight dotnet /path/to/tool/out/fusonic-git-backup.dll
-    
-## Run GitBackup with Docker
-You can build the docker image on you own but the fastest way to run your tool with docker is to 
-download the already built image from the Git repository and execute the downloaded docker image 
-as follows:
+### `Mail`
 
-	docker run --rm -v /ABSOLUTE/PATH/TO/BACKUP/DEST:/backup -v /ABSOLUTE/PATH/TO/YOUR/CUSTOMCONFIG/config.json:/app/app-settings.json fusonic/git-backup:latest
+Optional. Used to send a mail with the complete exception when a run fails. Leave `Host` empty to disable.
 
-* /ABSOLUTEPATH/TO/BACKUP/DEST => Set your absolute path to the destination path on your real machine here. This path 
-will be mounted to the /app/GitBackup witch is the working path of the tool inside the docker container.
-* /ABSOLUTE/PATH/TO/YOUR/CUSTOMCONFIG => You need to mount your app-settings.json to tell the file what it has
-to do.
+| Key | Description |
+|---|---|
+| `Host`, `Port` | SMTP server |
+| `UseSsl` | `true` for implicit TLS (typically port 465) |
+| `Username`, `Password` | SMTP credentials |
+| `Sender` / `Receiver` | `Address` and `Name` of the sender and recipient |
 
-### Docker cron job
-To execute the tool and create backups after regular time spans, implement a cron job with the docker run comand from above.
+### `DeadmanssnitchUrl`
 
-## Restore a Backup
-To restore a backup in a new repo simply clone the git repo from the backup location.
+Optional. Called after every successful run, see [Monitoring](#monitoring).
 
-## Deadman Snitch
-Configure a Deaman Snitch to ensure your backup program is running as expected. The Deadman Snitch will wait for a life signal in a configurable period of time.
-The tool will send a request to satisfy the Snitch whenever it gets executed successfully. If the tool fails it can not send a request to satisfy the Snitch in the configured 
-time period and the snitch will send you an email with an error alert. For example this can be useful if the full server shuts down and you wont get any other error messages, 
-since the tool will not even execute.
+## Access tokens
+
+Read access to repositories is all the tool needs. Create a dedicated, read-only token per platform.
+
+| Platform | Where | Permissions |
+|---|---|---|
+| GitHub | Settings → Developer settings → Personal access tokens | `repo` (classic) or read-only *Contents* and *Metadata* (fine-grained, include all repositories you want backed up) |
+| GitLab | User settings → Access tokens | `read_api` and `read_repository` |
+| Bitbucket | Personal settings → App passwords | Repositories: *Read* |
+
+> [!WARNING]
+> GitLab tokens expire. Set a long lifetime and renew the token before it runs out, otherwise the backup starts failing (and the error mail and Snitch will tell you).
+
+## Running it
+
+### Docker
+
+```sh
+docker run --rm \
+  -v /absolute/path/to/backups:/app/GitBackup \
+  -v /absolute/path/to/app-settings.json:/app/app-settings.json \
+  fusonic/git-backup:latest
+```
+
+| Mount | Purpose |
+|---|---|
+| `/app/GitBackup` | Backup destination on your host |
+| `/app/app-settings.json` | Your configuration |
+
+Schedule it with cron, for example every night at 02:00:
+
+```cron
+0 2 * * * docker run --rm -v /srv/backups:/app/GitBackup -v /srv/git-backup/app-settings.json:/app/app-settings.json fusonic/git-backup:latest
+```
+
+Or with Docker Compose and your scheduler of choice:
+
+```yaml
+services:
+  git-backup:
+    image: fusonic/git-backup:latest
+    volumes:
+      - ./backups:/app/GitBackup
+      - ./app-settings.json:/app/app-settings.json:ro
+```
+
+```sh
+docker compose run --rm git-backup
+```
+
+### Locally
+
+Requirements: [.NET 11 SDK](https://dotnet.microsoft.com/download) and `git` on your `PATH`.
+
+```sh
+git clone https://github.com/fusonic/git-backup.git
+cd git-backup
+# edit app-settings.json (or add app-settings.overwrite.json)
+dotnet run
+```
+
+To build a release and schedule it:
+
+```sh
+dotnet publish -c Release -o out
+```
+
+```cron
+@midnight dotnet /path/to/git-backup/out/fusonic-git-backup.dll
+```
+
+## Backup layout and strategies
+
+### Incremental (default)
+
+```text
+<Destination>/
+├── Github/
+│   └── <repository>/      # bare mirror
+├── Gitlab/
+│   └── <group>/<project>/
+└── Bitbucket/
+    └── <repository>/
+```
+
+- First run: `git clone --mirror`
+- Later runs: `git remote update` (only new data is transferred)
+- Nothing is deleted, so `DeleteAfterDays` has no effect.
+
+This is the fastest option and uses the least bandwidth and storage. Use snapshots (ZFS, restic, borg, cloud volume snapshots, ...) if you also want history of the backup itself.
+
+### Full
+
+```text
+<Destination>/
+└── 2026-11-16-02-00-00/
+    ├── Github/<repository>/
+    ├── Gitlab/<group>/<project>/
+    └── Bitbucket/<repository>/
+```
+
+Every run creates a new timestamped folder with fresh mirror clones. Folders older than `DeleteAfterDays` are removed at the end of a successful run.
+
+## Restoring a backup
+
+A backup is a regular bare git repository, so restoring is a clone:
+
+```sh
+git clone /path/to/backups/Github/my-repo my-repo
+```
+
+To push it to a new, empty remote with all branches and tags:
+
+```sh
+cd /path/to/backups/Github/my-repo
+git push --mirror https://example.com/me/my-repo.git
+```
+
+## Monitoring
+
+A failing run can tell you about itself. A run that never starts (server down, cron broken) can't. Two mechanisms cover both:
+
+- **Error mail**: configure `Mail` to receive the full exception whenever a run fails.
+- **Dead Man's Snitch**: set `DeadmanssnitchUrl` to your snitch URL. The tool calls it after every successful run. If the call stays away for the configured interval, the snitch alerts you.
 
 ## FAQ
-### How often does the projects create backups?
-Run the tool every day to get a daily backup, or as often as you want. For example with a cron-job.
-The program will create a full backup, each time it gets executed.
 
-### How do I know if a buckup failed?
-If a backup fails, an email will be sent to the address configured in the app-settings.json file.
-The email includes the full exception message of the error to serve you all the information you need
-to debug the tool.
+**How often does it run?**
+As often as you schedule it. Daily is a good default.
 
---------------- Happy backuping! ---------------
+**How do I know a backup failed?**
+You get an email with the full error (if `Mail` is configured) and the process logs it to the console. With a Snitch configured, you are also notified when a scheduled run is missing.
+
+**Can I back up several accounts of the same provider?**
+Yes, add one entry per account to `Git`.
+
+**Are my tokens safe?**
+Tokens only live in your configuration. They are handed to `git` via `GIT_ASKPASS` and are not written to the cloned repositories' remote URLs. Mount your config read-only and use a read-only token.
+
+## License
+
+[MIT](LICENSE) © Fusonic GmbH
