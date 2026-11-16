@@ -1,4 +1,5 @@
 ﻿using Fusonic.GitBackup.Models;
+using MailKit;
 using MailKit.Net.Smtp;
 using MimeKit;
 
