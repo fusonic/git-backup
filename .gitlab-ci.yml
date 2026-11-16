@@ -7,7 +7,9 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs/${CI_JOB_ID}"
   DOCKER_TLS_VERIFY: 1
   DOCKER_CERT_PATH: "/certs/${CI_JOB_ID}/client"
-  DOCKER_VERSION: "20.03"
+  DOCKER_VERSION: "26.1"
+  DOCKER_BUILDKIT: 1
+  DOCKER_DRIVER: overlay2
 
 build:
   image: mcr.microsoft.com/dotnet/sdk:11.0
@@ -22,10 +24,10 @@ build:
     expire_in: 1 hour
 
 build_image:
-  image: docker:git
+  image: docker:${DOCKER_VERSION}
   stage: build_image
   services:
-    - docker:dind
+    - docker:${DOCKER_VERSION}-dind-rootless
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build -t $CI_REGISTRY_IMAGE .
